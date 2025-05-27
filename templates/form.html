@@ -1,20 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formulário de Contato</title>
+  <meta charset="UTF-8">
+  <title>Inscrição Evento Geek</title>
 </head>
-    <body>
-        <h1>Formulário de Contato</h1>
-        <form action="/enviar" method="post">
-            <label>Nome:</label>
-            <input type="text" name="nome" required>
-            <br><br>
-            <label>Email:</label>
-            <input type="email" name="email" required>
-            <br><br>
-            <button type="submit">Enviar</button>
-        </form>
-    </body>
+<body>
+  <h1>Formulário de Inscrição - Evento Geek</h1>
+  <form action="/enviar" method="post">
+    <label>Nome completo:</label>
+    <input type="text" name="nome_completo" required><br><br>
+
+    <label>Email:</label>
+    <input type="email" name="email" required><br><br>
+
+    <label>Categoria:</label>
+    <select name="categoria" required>
+      <option value="Cosplay">Cosplay</option>
+      <option value="Game retrô">Game retrô</option>
+      <option value="Oficina">Oficina</option>
+    </select><br><br>
+
+    <label>Personagem ou jogo favorito:</label>
+    <input type="text" name="personagem_jogo" required><br><br>
+
+    <label>Nível de experiência:</label>
+    <select name="nivel_experiencia" required>
+      <option value="Iniciante">Iniciante</option>
+      <option value="Intermediário">Intermediário</option>
+      <option value="Avançado">Avançado</option>
+    </select><br><br>
+
+    <button type="submit">Enviar Inscrição</button>
+  </form>
+</body>
 </html>
