@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <MER>
 	<Informacoes>
-		<Posicao Left="0" Top="0"/>
+		<Posicao Left="430" Top="183"/>
 		<TotalItens Valor="36"/>
 		<Tipo Valor="CONCEITUAL"/>
 		<Versao Valor="1.0.1"/>
@@ -40,8 +40,8 @@
       <Especializacoes ehEsp="0"/>
     </Entidade>
     <Entidade nome="regiao" id="4">
-      <Left Valor="1133"/>
-      <Top Valor="295"/>
+      <Left Valor="961"/>
+      <Top Valor="471"/>
       <Width Valor="102"/>
       <Height Valor="66"/>
       <Fonte default="-1"/>
@@ -184,8 +184,8 @@
           <MostraCardinalidade Valor="-1" Card_id="55"/>
           <Cardinalidades Cardinalidade="1">
             <Cardinalidade nome="" id="55">
-              <Left Valor="1095"/>
-              <Top Valor="313"/>
+              <Left Valor="1012"/>
+              <Top Valor="456"/>
               <Width Valor="40"/>
               <Height Valor="20"/>
               <Fonte default="-1"/>
