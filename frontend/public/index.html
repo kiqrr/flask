@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Lost and Found</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></link>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto">
+        <header class="bg-blue-500 text-white p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <i class="fas fa-paw fa-2x"></i>
+                    <span class="text-lg ml-2">Cadê meu pet?</span>
+                </div>
+                <div>
+                    <a href="#" class="mr-4">Login</a>
+                    <a href="#" class="bg-white text-blue-500 py-2 px-4 rounded">Cadastra-se</a>
+                </div>
+            </div>
+        </header>
+
+        <section class="text-center py-12">
+            <h1 class="text-3xl font-semibold">Encontre seu pet:</h1>
+            <div class="flex justify-center mt-4">
+                <select class="mr-2">
+                    <option>Gênero</option>
+                </select>
+                <select class="mr-2">
+                    <option>Espécie</option>
+                </select>
+                <select class="mr-2">
+                    <option>Estado</option>
+                </select>
+                <select>
+                    <option>Cidade</option>
+                </select>
+            </div>
+        </section>
+
+        <section class="grid grid-cols-3 gap-4 px-4" id="pets-container">
+            
+        </section>
+
+        <footer class="bg-gray-200 text-center p-4 mt-8">
+            <p>Não conseguiu achar seu animal? <a href="#" class="text-blue-500">Faça uma busca mais detalhada aqui!</a></p>
+            <a href="#" class="bg-blue-500 text-white py-2 px-4 rounded mt-4 inline-block">PERDI MEU PET →</a>
+        </footer>
+    </div>
+
+    <script>
+        fetch('http://127.0.0.1:5000/pets')
+            .then(response => response.json())
+            .then(pets => {
+                const petsContainer = document.getElementById('pets-container');
+                pets.forEach(pet => {
+                    const petDiv = document.createElement('div');
+                    petDiv.className = 'bg-white p-4 rounded';
+                    petDiv.innerHTML = `
+                        <img src="https://via.placeholder.com/150" alt="Pet" class="mx-auto" />
+                        <h2 class="text-lg font-semibold">${pet.name}</h2>
+                        <p>${pet.size} Porte</p>
+                        <p>Se perdeu dia ${pet.lost_date} perto da ${pet.lost_location}...</p>
+                        <a href="#" class="text-blue-500">VER MAIS</a>
+                    `;
+                    petsContainer.appendChild(petDiv);
+                });
+            });
+    </script>
+</body>
+</html>
