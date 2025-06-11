@@ -8,66 +8,88 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
-    <div class="container mx-auto">
-        <header class="bg-blue-500 text-white p-4">
+    <header class="bg-blue-500 text-white w-full">
+        <div class="container mx-auto px-4 py-4">
             <div class="flex items-center justify-between">
                 <div>
                     <i class="fas fa-paw fa-2x"></i>
                     <span class="text-lg ml-2">Cadê meu pet?</span>
                 </div>
                 <div>
-                    <a href="#" class="mr-4">Login</a>
-                    <a href="#" class="bg-white text-blue-500 py-2 px-4 rounded">Cadastra-se</a>
+                    <a href="#" class="mr-4 hover:text-gray-200">Login</a>
+                    <a href="#" class="bg-white text-blue-500 py-2 px-4 rounded hover:bg-gray-100">Cadastra-se</a>
                 </div>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <section class="text-center py-12">
-            <h1 class="text-3xl font-semibold">Encontre seu pet:</h1>
-            <div class="flex justify-center mt-4">
-                <select class="mr-2">
+    <main class="container mx-auto px-4">
+        <section class="text-center py-8">
+            <h1 class="text-3xl font-semibold mb-4">Encontre seu pet:</h1>
+            <div class="flex justify-center gap-2">
+                <select class="px-3 py-2 rounded border">
                     <option>Gênero</option>
                 </select>
-                <select class="mr-2">
+                <select class="px-3 py-2 rounded border">
                     <option>Espécie</option>
                 </select>
-                <select class="mr-2">
+                <select class="px-3 py-2 rounded border">
                     <option>Estado</option>
                 </select>
-                <select>
+                <select class="px-3 py-2 rounded border">
                     <option>Cidade</option>
                 </select>
             </div>
         </section>
 
-        <section class="grid grid-cols-3 gap-4 px-4" id="pets-container">
-            
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div class="bg-green-200 p-4 rounded-lg text-center hover:bg-green-300 transition-colors cursor-pointer">
+                <i class="fas fa-search fa-2x mb-2"></i>
+                <p>Estou procurando meu pet :(</p>
+            </div>
+            <div class="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg" alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
+                <h2 class="text-lg font-semibold">Miau da Silva</h2>
+                <p class="text-sm text-gray-600">Pequeno Porte</p>
+                <p class="text-sm text-gray-600 my-1">Se perdeu dia 01/02/2023 perto da Avenida Washington Luis...</p>
+                <a href="#" class="text-blue-500 text-sm hover:text-blue-700">VER MAIS</a>
+            </div>
+            <div class="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://images.pexels.com/photos/2253275/pexels-photo-2253275.jpeg" alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
+                <h2 class="text-lg font-semibold">Caramelho</h2>
+                <p class="text-sm text-gray-600">Médio Porte</p>
+                <p class="text-sm text-gray-600 my-1">Se perdeu dia 01/02/2023 perto da Avenida Washington Luis...</p>
+                <a href="#" class="text-blue-500 text-sm hover:text-blue-700">VER MAIS</a>
+            </div>
+            <div class="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://images.pexels.com/photos/97533/pexels-photo-97533.jpeg" alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
+                <h2 class="text-lg font-semibold">Sabido</h2>
+                <p class="text-sm text-gray-600">Pequeno Porte</p>
+                <p class="text-sm text-gray-600 my-1">Se perdeu dia 01/02/2023 perto da Avenida Washington Luis...</p>
+                <a href="#" class="text-blue-500 text-sm hover:text-blue-700">VER MAIS</a>
+            </div>
+            <div class="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://images.pexels.com/photos/1805164/pexels-photo-1805164.jpeg" alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
+                <h2 class="text-lg font-semibold">Thor</h2>
+                <p class="text-sm text-gray-600">Grande Porte</p>
+                <p class="text-sm text-gray-600 my-1">Se perdeu dia 01/02/2023 perto da Avenida Washington Luis...</p>
+                <a href="#" class="text-blue-500 text-sm hover:text-blue-700">VER MAIS</a>
+            </div>
+            <div class="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                <img src="https://images.pexels.com/photos/1490908/pexels-photo-1490908.jpeg" alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
+                <h2 class="text-lg font-semibold">Luna</h2>
+                <p class="text-sm text-gray-600">Médio Porte</p>
+                <p class="text-sm text-gray-600 my-1">Se perdeu dia 01/02/2023 perto da Avenida Washington Luis...</p>
+                <a href="#" class="text-blue-500 text-sm hover:text-blue-700">VER MAIS</a>
+            </div>
         </section>
+    </main>
 
-        <footer class="bg-gray-200 text-center p-4 mt-8">
-            <p>Não conseguiu achar seu animal? <a href="#" class="text-blue-500">Faça uma busca mais detalhada aqui!</a></p>
-            <a href="#" class="bg-blue-500 text-white py-2 px-4 rounded mt-4 inline-block">PERDI MEU PET →</a>
-        </footer>
-    </div>
-
-    <script>
-        fetch('http://127.0.0.1:5000/pets')
-            .then(response => response.json())
-            .then(pets => {
-                const petsContainer = document.getElementById('pets-container');
-                pets.forEach(pet => {
-                    const petDiv = document.createElement('div');
-                    petDiv.className = 'bg-white p-4 rounded';
-                    petDiv.innerHTML = `
-                        <img src="https://via.placeholder.com/150" alt="Pet" class="mx-auto" />
-                        <h2 class="text-lg font-semibold">${pet.name}</h2>
-                        <p>${pet.size} Porte</p>
-                        <p>Se perdeu dia ${pet.lost_date} perto da ${pet.lost_location}...</p>
-                        <a href="#" class="text-blue-500">VER MAIS</a>
-                    `;
-                    petsContainer.appendChild(petDiv);
-                });
-            });
-    </script>
+    <footer class="bg-gray-200 w-full mt-8">
+        <div class="container mx-auto px-4 py-4 text-center">
+            <p class="mb-2">Não conseguiu achar seu animal? <a href="#" class="text-blue-500 hover:text-blue-700">Faça uma busca mais detalhada aqui!</a></p>
+            <a href="#" class="bg-blue-500 text-white py-2 px-4 rounded inline-block hover:bg-blue-600 transition-colors">PERDI MEU PET →</a>
+        </div>
+    </footer>
 </body>
 </html>
