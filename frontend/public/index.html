@@ -42,45 +42,10 @@
             </div>
         </section>
 
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8" id="pets-container">
             <div class="bg-green-200 p-4 rounded-lg text-center hover:bg-green-300 transition-colors cursor-pointer">
                 <i class="fas fa-search fa-2x mb-2"></i>
                 <p>Estou procurando meu pet :(</p>
-            </div>
-            <div class="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <img src="https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg" alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
-                <h2 class="text-lg font-semibold">Miau da Silva</h2>
-                <p class="text-sm text-gray-600">Pequeno Porte</p>
-                <p class="text-sm text-gray-600 my-1">Se perdeu dia 01/02/2023 perto da Avenida Washington Luis...</p>
-                <a href="#" class="text-blue-500 text-sm hover:text-blue-700">VER MAIS</a>
-            </div>
-            <div class="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <img src="https://images.pexels.com/photos/2253275/pexels-photo-2253275.jpeg" alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
-                <h2 class="text-lg font-semibold">Caramelho</h2>
-                <p class="text-sm text-gray-600">Médio Porte</p>
-                <p class="text-sm text-gray-600 my-1">Se perdeu dia 01/02/2023 perto da Avenida Washington Luis...</p>
-                <a href="#" class="text-blue-500 text-sm hover:text-blue-700">VER MAIS</a>
-            </div>
-            <div class="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <img src="https://images.pexels.com/photos/97533/pexels-photo-97533.jpeg" alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
-                <h2 class="text-lg font-semibold">Sabido</h2>
-                <p class="text-sm text-gray-600">Pequeno Porte</p>
-                <p class="text-sm text-gray-600 my-1">Se perdeu dia 01/02/2023 perto da Avenida Washington Luis...</p>
-                <a href="#" class="text-blue-500 text-sm hover:text-blue-700">VER MAIS</a>
-            </div>
-            <div class="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <img src="https://images.pexels.com/photos/1805164/pexels-photo-1805164.jpeg" alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
-                <h2 class="text-lg font-semibold">Thor</h2>
-                <p class="text-sm text-gray-600">Grande Porte</p>
-                <p class="text-sm text-gray-600 my-1">Se perdeu dia 01/02/2023 perto da Avenida Washington Luis...</p>
-                <a href="#" class="text-blue-500 text-sm hover:text-blue-700">VER MAIS</a>
-            </div>
-            <div class="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                <img src="https://images.pexels.com/photos/1490908/pexels-photo-1490908.jpeg" alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
-                <h2 class="text-lg font-semibold">Luna</h2>
-                <p class="text-sm text-gray-600">Médio Porte</p>
-                <p class="text-sm text-gray-600 my-1">Se perdeu dia 01/02/2023 perto da Avenida Washington Luis...</p>
-                <a href="#" class="text-blue-500 text-sm hover:text-blue-700">VER MAIS</a>
             </div>
         </section>
     </main>
@@ -91,5 +56,80 @@
             <a href="#" class="bg-blue-500 text-white py-2 px-4 rounded inline-block hover:bg-blue-600 transition-colors">PERDI MEU PET →</a>
         </div>
     </footer>
+
+    <script>
+        // Use relative URL for API
+        const API_URL = '/api';
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const [year, month, day] = dateStr.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        function getPetImage(observations) {
+            if (observations && (observations.toLowerCase().includes('cão') || 
+                observations.toLowerCase().includes('cachorro'))) {
+                return '2253275';
+            }
+            return '45201';
+        }
+
+        function createPetCard(pet) {
+            const petDiv = document.createElement('div');
+            petDiv.className = 'bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow';
+            
+            const imageId = getPetImage(pet.observations);
+            
+            petDiv.innerHTML = `
+                <a href="pet-details.html?id=${pet.id}" class="block">
+                    <img src="https://images.pexels.com/photos/${imageId}/pexels-photo-${imageId}.jpeg" 
+                         alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
+                    <h2 class="text-lg font-semibold">${pet.name}</h2>
+                    <p class="text-sm text-gray-600">${pet.status}</p>
+                    <p class="text-sm text-gray-600 my-1">
+                        Se perdeu dia ${formatDate(pet.lost_date)} em ${pet.lost_location}
+                    </p>
+                    <p class="text-sm text-gray-600 mb-2">Dono: ${pet.owner_name}</p>
+                    <span class="text-blue-500 text-sm hover:text-blue-700">VER MAIS</span>
+                </a>
+            `;
+            return petDiv;
+        }
+
+        async function loadPets() {
+            const petsContainer = document.getElementById('pets-container');
+            const searchCard = petsContainer.firstElementChild;
+            
+            try {
+                console.log('Fetching from:', `${API_URL}/pets`);
+                const response = await fetch(`${API_URL}/pets`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const pets = await response.json();
+                console.log('Received pets:', pets);
+
+                // Clear container and add back search card
+                petsContainer.innerHTML = '';
+                petsContainer.appendChild(searchCard);
+
+                // Add pet cards
+                pets.forEach(pet => {
+                    const petCard = createPetCard(pet);
+                    petsContainer.appendChild(petCard);
+                });
+            } catch (error) {
+                console.error('Error loading pets:', error);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'col-span-full text-center text-red-500';
+                errorDiv.textContent = 'Erro ao carregar os pets. Por favor, tente novamente mais tarde.';
+                petsContainer.appendChild(errorDiv);
+            }
+        }
+
+        // Load pets when page loads
+        loadPets();
+    </script>
 </body>
 </html>

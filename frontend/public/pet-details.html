@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalhes do Pet - Cadê meu pet?</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></link>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-blue-500 text-white w-full">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <a href="/" class="flex items-center hover:text-gray-200">
+                    <i class="fas fa-paw fa-2x"></i>
+                    <span class="text-lg ml-2">Cadê meu pet?</span>
+                </a>
+                <div>
+                    <a href="#" class="mr-4 hover:text-gray-200">Login</a>
+                    <a href="#" class="bg-white text-blue-500 py-2 px-4 rounded hover:bg-gray-100">Cadastra-se</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="md:flex">
+                <div class="md:w-1/2">
+                    <img id="pet-image" src="" alt="Pet" class="w-full h-96 object-cover"/>
+                </div>
+                <div class="p-6 md:w-1/2">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h1 id="pet-name" class="text-3xl font-bold mb-2"></h1>
+                            <p id="pet-status" class="text-gray-600 mb-4"></p>
+                        </div>
+                        <span class="bg-red-100 text-red-800 text-sm font-semibold px-3 py-1 rounded-full">Perdido</span>
+                    </div>
+                    
+                    <div class="border-t border-gray-200 py-4">
+                        <h2 class="text-xl font-semibold mb-3">Informações</h2>
+                        <div class="space-y-2">
+                            <p id="pet-observations" class="text-gray-600"></p>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-200 py-4">
+                        <h2 class="text-xl font-semibold mb-3">Último local visto</h2>
+                        <p id="pet-location" class="text-gray-800"></p>
+                        <p id="pet-date" class="text-gray-600 mt-1"></p>
+                    </div>
+
+                    <div class="border-t border-gray-200 py-4">
+                        <h2 class="text-xl font-semibold mb-3">Contato</h2>
+                        <div class="space-y-2">
+                            <p id="pet-owner" class="text-gray-600"></p>
+                            <a id="whatsapp-link" href="#" class="bg-green-500 text-white py-2 px-4 rounded inline-flex items-center hover:bg-green-600 transition-colors">
+                                <i class="fab fa-whatsapp mr-2"></i>
+                                Entrar em contato
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-200 w-full mt-8">
+        <div class="container mx-auto px-4 py-4 text-center">
+            <p class="mb-2">Não conseguiu achar seu animal? <a href="#" class="text-blue-500 hover:text-blue-700">Faça uma busca mais detalhada aqui!</a></p>
+            <a href="#" class="bg-blue-500 text-white py-2 px-4 rounded inline-block hover:bg-blue-600 transition-colors">PERDI MEU PET →</a>
+        </div>
+    </footer>
+
+    <script>
+        // Use relative URL for API
+        const API_URL = '/api';
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const [year, month, day] = dateStr.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        function getPetImage(observations) {
+            if (observations && (observations.toLowerCase().includes('cão') || 
+                observations.toLowerCase().includes('cachorro'))) {
+                return '2253275';
+            }
+            return '45201';
+        }
+
+        // Get pet ID from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const petId = urlParams.get('id');
+
+        // Fetch pet details from API
+        fetch(`${API_URL}/pets/${petId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(pet => {
+                console.log('Received pet details:', pet);
+                const imageId = getPetImage(pet.observations);
+                document.getElementById('pet-image').src = 
+                    `https://images.pexels.com/photos/${imageId}/pexels-photo-${imageId}.jpeg`;
+
+                document.getElementById('pet-name').textContent = pet.name;
+                document.getElementById('pet-status').textContent = pet.status;
+                document.getElementById('pet-observations').textContent = pet.observations;
+                document.getElementById('pet-location').textContent = pet.lost_location;
+                document.getElementById('pet-date').textContent = `Perdido em ${formatDate(pet.lost_date)}`;
+                document.getElementById('pet-owner').textContent = `Dono: ${pet.owner_name}`;
+
+                // Set up WhatsApp link
+                const phone = pet.owner_phone.replace(/\D/g, '');
+                const whatsappLink = `https://wa.me/55${phone}?text=Olá, vi seu pet perdido no site Cadê meu pet?`;
+                document.getElementById('whatsapp-link').href = whatsappLink;
+            })
+            .catch(error => {
+                console.error('Error loading pet details:', error);
+                const mainContent = document.querySelector('main');
+                mainContent.innerHTML = `
+                    <div class="text-center text-red-500 py-8">
+                        Erro ao carregar os detalhes do pet. Por favor, tente novamente mais tarde.
+                    </div>
+                `;
+            });
+    </script>
+</body>
+</html>

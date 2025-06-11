@@ -1,49 +1,87 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import sqlite3
+import json
+from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-pets = [
-    {'id': 1, 'name': 'Miau da Silva', 'species': 'Cat', 'breed': 'Domestic Shorthair', 'age': 3, 'size': 'Small', 'lost_date': '2023-01-02', 'lost_location': 'Avenida Washington Luis'},
-    {'id': 2, 'name': 'Caramelho', 'species': 'Dog', 'breed': 'Mixed Breed', 'age': 5, 'size': 'Medium', 'lost_date': '2023-01-02', 'lost_location': 'Avenida Washington Luis'},
-    {'id': 3, 'name': 'Sabido', 'species': 'Parrot', 'breed': 'Budgerigar', 'age': 1, 'size': 'Small', 'lost_date': '2023-01-02', 'lost_location': 'Avenida Washington Luis'}
-]
+class JSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        return str(obj)
 
-@app.route('/pets', methods=['GET'])
+app.json_encoder = JSONEncoder
+
+def dict_factory(cursor, row):
+    return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
+
+def get_db():
+    conn = sqlite3.connect('backend/database.db')
+    conn.row_factory = dict_factory
+    return conn
+
+@app.route('/api/pets', methods=['GET'])
 def get_pets():
-    return jsonify(pets)
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT 
+                p.Cod_animal as id,
+                p.Nome_animal as name,
+                p.status,
+                p.data_perda as lost_date,
+                p.observacoes as observations,
+                u.Nome_usuario || ' ' || u.sobrenome_usuario as owner_name,
+                u.telefone as owner_phone,
+                e.Bairro || ', ' || e.Cidade || ' - ' || e.Estado as lost_location
+            FROM pets p
+            JOIN usuario u ON p.cod_usuario = u.Cod_usuario
+            JOIN endereco e ON u.cod_endereco = e.Cod_endereco
+            WHERE p.status = 'perdido'
+        ''')
+        
+        pets = cursor.fetchall()
+        conn.close()
+        
+        return jsonify(pets)
+    except Exception as e:
+        print(f"Error in get_pets: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
-@app.route('/pets/<int:id>', methods=['GET'])
+@app.route('/api/pets/<int:id>', methods=['GET'])
 def get_pet(id):
-    pet = next((pet for pet in pets if pet['id'] == id), None)
-    if pet:
-        return jsonify(pet)
-    return jsonify({'message': 'Pet not found'}), 404
-
-@app.route('/pets', methods=['POST'])
-def create_pet():
-    new_pet = request.get_json()
-    new_pet['id'] = len(pets) + 1
-    pets.append(new_pet)
-    return jsonify(new_pet), 201
-
-@app.route('/pets/<int:id>', methods=['PUT'])
-def update_pet(id):
-    pet = next((pet for pet in pets if pet['id'] == id), None)
-    if pet:
-        data = request.get_json()
-        pet.update(data)
-        return jsonify(pet)
-    return jsonify({'message': 'Pet not found'}), 404
-
-@app.route('/pets/<int:id>', methods=['DELETE'])
-def delete_pet(id):
-    pet = next((pet for pet in pets if pet['id'] == id), None)
-    if pet:
-        pets.remove(pet)
-        return jsonify({'message': 'Pet deleted'})
-    return jsonify({'message': 'Pet not found'}), 404
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT 
+                p.Cod_animal as id,
+                p.Nome_animal as name,
+                p.status,
+                p.data_perda as lost_date,
+                p.observacoes as observations,
+                u.Nome_usuario || ' ' || u.sobrenome_usuario as owner_name,
+                u.telefone as owner_phone,
+                e.Bairro || ', ' || e.Cidade || ' - ' || e.Estado as lost_location
+            FROM pets p
+            JOIN usuario u ON p.cod_usuario = u.Cod_usuario
+            JOIN endereco e ON u.cod_endereco = e.Cod_endereco
+            WHERE p.Cod_animal = ?
+        ''', (id,))
+        
+        pet = cursor.fetchone()
+        conn.close()
+        
+        if pet:
+            return jsonify(pet)
+        return jsonify({'message': 'Pet not found'}), 404
+    except Exception as e:
+        print(f"Error in get_pet: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
