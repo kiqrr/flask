@@ -88,7 +88,7 @@ class ProxyHandler(SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     import os
-    os.chdir('c:/Users/axtec/OneDrive/Área de Trabalho/flask')  # Set working directory to current project
+    os.chdir('c:/Users/DEV-N-2025/flask')  # Set working directory to current project
     server = HTTPServer(('', 8000), ProxyHandler)
     print('Starting server on port 8000...')
     server.serve_forever()

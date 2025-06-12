@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-import sqlite3
+import pyodbc
 import json
 from datetime import datetime
 
@@ -14,11 +14,17 @@ class JSONEncoder(json.JSONEncoder):
 app.json_encoder = JSONEncoder
 
 def dict_factory(cursor, row):
-    return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
+    columns = [column[0] for column in cursor.description]
+    return dict(zip(columns, row))
 
 def get_db():
-    conn = sqlite3.connect('backend/database.db')
-    conn.row_factory = dict_factory
+    conn_str = (
+        r'DRIVER={ODBC Driver 17 for SQL Server};'
+        r'SERVER=ALUNO33\MSSQLSERVER03;'
+        r'DATABASE=cademeupet;'
+        r'Trusted_Connection=yes;'
+    )
+    conn = pyodbc.connect(conn_str)
     return conn
 
 def create_pet(data):
@@ -28,6 +34,7 @@ def create_pet(data):
         # First, create address
         cursor.execute('''
             INSERT INTO endereco (Estado, Cidade, Bairro, Numero, Complemento, CEP)
+            OUTPUT INSERTED.Cod_endereco
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (
             data['address']['state'],
@@ -37,11 +44,12 @@ def create_pet(data):
             data['address']['complement'],
             data['address']['zip_code']
         ))
-        address_id = cursor.lastrowid
+        address_id = cursor.fetchone()[0]
 
         # Then, create user
         cursor.execute('''
             INSERT INTO usuario (cod_endereco, Nome_usuario, sobrenome_usuario, telefone, email)
+            OUTPUT INSERTED.Cod_usuario
             VALUES (?, ?, ?, ?, ?)
         ''', (
             address_id,
@@ -50,11 +58,12 @@ def create_pet(data):
             data['owner']['phone'],
             data['owner']['email']
         ))
-        user_id = cursor.lastrowid
+        user_id = cursor.fetchone()[0]
 
         # Finally, create pet
         cursor.execute('''
             INSERT INTO pets (cod_usuario, Nome_animal, status, data_registro, data_perda, observacoes)
+            OUTPUT INSERTED.Cod_animal
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (
             user_id,
@@ -64,9 +73,10 @@ def create_pet(data):
             data['pet']['lost_date'],
             data['pet']['observations']
         ))
+        pet_id = cursor.fetchone()[0]
         
         conn.commit()
-        return True, cursor.lastrowid
+        return True, pet_id
     except Exception as e:
         conn.rollback()
         return False, str(e)
@@ -86,9 +96,9 @@ def get_pets():
                 p.status,
                 p.data_perda as lost_date,
                 p.observacoes as observations,
-                u.Nome_usuario || ' ' || u.sobrenome_usuario as owner_name,
+                u.Nome_usuario + ' ' + u.sobrenome_usuario as owner_name,
                 u.telefone as owner_phone,
-                e.Bairro || ', ' || e.Cidade || ' - ' || e.Estado as lost_location
+                e.Bairro + ', ' + e.Cidade + ' - ' + e.Estado as lost_location
             FROM pets p
             JOIN usuario u ON p.cod_usuario = u.Cod_usuario
             JOIN endereco e ON u.cod_endereco = e.Cod_endereco
@@ -98,7 +108,8 @@ def get_pets():
         pets = cursor.fetchall()
         conn.close()
         
-        return jsonify(pets)
+        pets_list = [dict_factory(cursor, row) for row in pets]
+        return jsonify(pets_list)
     except Exception as e:
         print(f"Error in get_pets: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -116,9 +127,9 @@ def get_pet(id):
                 p.status,
                 p.data_perda as lost_date,
                 p.observacoes as observations,
-                u.Nome_usuario || ' ' || u.sobrenome_usuario as owner_name,
+                u.Nome_usuario + ' ' + u.sobrenome_usuario as owner_name,
                 u.telefone as owner_phone,
-                e.Bairro || ', ' || e.Cidade || ' - ' || e.Estado as lost_location
+                e.Bairro + ', ' + e.Cidade + ' - ' + e.Estado as lost_location
             FROM pets p
             JOIN usuario u ON p.cod_usuario = u.Cod_usuario
             JOIN endereco e ON u.cod_endereco = e.Cod_endereco
@@ -129,7 +140,8 @@ def get_pet(id):
         conn.close()
         
         if pet:
-            return jsonify(pet)
+            pet_dict = dict_factory(cursor, pet)
+            return jsonify(pet_dict)
         return jsonify({'message': 'Pet not found'}), 404
     except Exception as e:
         print(f"Error in get_pet: {str(e)}")
