@@ -29,3 +29,11 @@ CREATE TABLE pets (
     status TEXT NOT NULL CHECK (status IN ('perdido', 'encontrado', 'resgatado', 'adotado')),
     FOREIGN KEY (cod_usuario) REFERENCES usuario(Cod_usuario)
 );
+
+CREATE TABLE pet_photos (
+    photo_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pet_id INTEGER NOT NULL,
+    photo_path TEXT NOT NULL,
+    is_primary BOOLEAN NOT NULL DEFAULT 0,
+    FOREIGN KEY (pet_id) REFERENCES pets(Cod_animal)
+);

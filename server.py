@@ -25,8 +25,10 @@ class ProxyHandler(SimpleHTTPRequestHandler):
                     # Copy status code
                     self.send_response(response.status)
                     
-                    # Copy headers
-                    self.send_header('Content-Type', 'application/json')
+                    # Copy headers from backend response
+                    for header, value in response.headers.items():
+                        if header.lower() not in ['server', 'date', 'connection']:
+                            self.send_header(header, value)
                     self.send_header('Access-Control-Allow-Origin', '*')
                     self.end_headers()
                     

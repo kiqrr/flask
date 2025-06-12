@@ -1,17 +1,29 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import pyodbc
 import json
+import os
 from datetime import datetime
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+MAX_PHOTOS = 5
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         return str(obj)
 
 app.json_encoder = JSONEncoder
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def dict_factory(cursor, row):
     columns = [column[0] for column in cursor.description]
@@ -98,7 +110,8 @@ def get_pets():
                 p.observacoes as observations,
                 u.Nome_usuario + ' ' + u.sobrenome_usuario as owner_name,
                 u.telefone as owner_phone,
-                e.Bairro + ', ' + e.Cidade + ' - ' + e.Estado as lost_location
+                e.Bairro + ', ' + e.Cidade + ' - ' + e.Estado as lost_location,
+                (SELECT TOP 1 photo_path FROM pet_photos WHERE pet_id = p.Cod_animal AND is_primary = 1) as primary_photo
             FROM pets p
             JOIN usuario u ON p.cod_usuario = u.Cod_usuario
             JOIN endereco e ON u.cod_endereco = e.Cod_endereco
@@ -113,6 +126,15 @@ def get_pets():
     except Exception as e:
         print(f"Error in get_pets: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pets', methods=['POST'])
+def create_pet_route():
+    data = request.get_json()
+    success, result = create_pet(data)
+    if success:
+        return jsonify({'id': result}), 201
+    else:
+        return jsonify({'message': result}), 400
 
 @app.route('/api/pets/<int:id>', methods=['GET'])
 def get_pet(id):
@@ -137,30 +159,99 @@ def get_pet(id):
         ''', (id,))
         
         pet = cursor.fetchone()
+        if not pet:
+            conn.close()
+            return jsonify({'message': 'Pet not found'}), 404
+        
+        pet_dict = dict_factory(cursor, pet)
+        
+        # Get all photos for the pet
+        cursor.execute('''
+            SELECT photo_id, photo_path, is_primary
+            FROM pet_photos
+            WHERE pet_id = ?
+            ORDER BY is_primary DESC, photo_id ASC
+        ''', (id,))
+        photos = cursor.fetchall()
         conn.close()
         
-        if pet:
-            pet_dict = dict_factory(cursor, pet)
-            return jsonify(pet_dict)
-        return jsonify({'message': 'Pet not found'}), 404
+        pet_dict['photos'] = [dict_factory(cursor, row) for row in photos]
+        
+        return jsonify(pet_dict)
     except Exception as e:
         print(f"Error in get_pet: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/pets', methods=['POST'])
-def create_new_pet():
+@app.route('/api/pets/<int:id>/photos', methods=['POST'])
+def upload_pet_photos(id):
+    if 'photos' not in request.files:
+        return jsonify({'message': 'No photos part in the request'}), 400
+    
+    files = request.files.getlist('photos')
+    if len(files) == 0:
+        return jsonify({'message': 'No photos uploaded'}), 400
+    if len(files) > MAX_PHOTOS:
+        return jsonify({'message': f'Maximum {MAX_PHOTOS} photos allowed'}), 400
+    
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    saved_photos = []
     try:
-        data = request.get_json()
-        success, result = create_pet(data)
+        # Check if pet exists
+        cursor.execute('SELECT Cod_animal FROM pets WHERE Cod_animal = ?', (id,))
+        pet = cursor.fetchone()
+        if not pet:
+            return jsonify({'message': 'Pet not found'}), 404
         
-        if success:
-            return jsonify({'message': 'Pet registered successfully', 'id': result}), 201
-        else:
-            return jsonify({'message': 'Failed to register pet', 'error': result}), 400
-            
+        # Check how many photos already exist
+        cursor.execute('SELECT COUNT(*) FROM pet_photos WHERE pet_id = ?', (id,))
+        count = cursor.fetchone()[0]
+        if count + len(files) > MAX_PHOTOS:
+            return jsonify({'message': f'You can upload only {MAX_PHOTOS - count} more photos'}), 400
+        
+        for idx, file in enumerate(files):
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                # To avoid filename conflicts, prepend pet id and timestamp
+                timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')
+                filename = f"{id}_{timestamp}_{filename}"
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(filepath)
+                print(f"Saved photo file at: {filepath}")
+                
+                # If no photos exist, mark first as primary
+                is_primary = 0
+                if count == 0 and idx == 0:
+                    is_primary = 1
+                
+                cursor.execute('''
+                    INSERT INTO pet_photos (pet_id, photo_path, is_primary)
+                    VALUES (?, ?, ?)
+                ''', (id, filename, is_primary))
+                saved_photos.append(filename)
+        
+        conn.commit()
+        return jsonify({'message': 'Photos uploaded successfully', 'files': saved_photos}), 201
     except Exception as e:
-        print(f"Error in create_new_pet: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        conn.rollback()
+        # Delete any saved files if database operation failed
+        for photo in saved_photos:
+            try:
+                os.remove(os.path.join(UPLOAD_FOLDER, photo))
+            except:
+                pass
+        return jsonify({'message': 'Failed to upload photos', 'error': str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/uploads/<path:filename>')
+def serve_photo(filename):
+    print(f"Serving photo: {filename}")
+    print(f"Upload folder: {UPLOAD_FOLDER}")
+    print(f"Full path: {os.path.join(UPLOAD_FOLDER, filename)}")
+    print(f"File exists: {os.path.exists(os.path.join(UPLOAD_FOLDER, filename))}")
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

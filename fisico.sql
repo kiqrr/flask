@@ -34,6 +34,14 @@ CREATE TABLE pets (
     CONSTRAINT CK_pets_status CHECK (status IN ('perdido', 'encontrado', 'resgatado', 'adotado'))
 );
 
+CREATE TABLE pet_photos (
+    photo_id INT IDENTITY(1,1) PRIMARY KEY,
+    pet_id INT NOT NULL,
+    photo_path NVARCHAR(500) NOT NULL,
+    is_primary BIT NOT NULL DEFAULT 0,
+    CONSTRAINT FK_pet_photos_pets FOREIGN KEY (pet_id) REFERENCES pets(Cod_animal)
+);
+
 -- Limpar dados existentes (se houver)
 DELETE FROM pets;
 DELETE FROM usuario;  

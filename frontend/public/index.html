@@ -59,7 +59,7 @@
 
     <script>
         // Use relative URL for API
-        const API_URL = '/api';
+        const API_URL = 'http://localhost:5000/api';
 
         function formatDate(dateStr) {
             if (!dateStr) return '';
@@ -79,12 +79,16 @@
             const petDiv = document.createElement('div');
             petDiv.className = 'bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow';
             
-            const imageId = getPetImage(pet.observations);
+            const defaultImageId = getPetImage(pet.observations);
+            const imageUrl = pet.primary_photo 
+                ? `http://localhost:5000/api/uploads/${pet.primary_photo}`
+                : `https://images.pexels.com/photos/${defaultImageId}/pexels-photo-${defaultImageId}.jpeg`;
             
             petDiv.innerHTML = `
                 <a href="pet-details.html?id=${pet.id}" class="block">
-                    <img src="https://images.pexels.com/photos/${imageId}/pexels-photo-${imageId}.jpeg" 
-                         alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" />
+                    <img src="${imageUrl}" 
+                         alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" 
+                         onerror="this.onerror=null; this.src='https://images.pexels.com/photos/${defaultImageId}/pexels-photo-${defaultImageId}.jpeg';" />
                     <h2 class="text-lg font-semibold">${pet.name}</h2>
                     <p class="text-sm text-gray-600">${pet.status}</p>
                     <p class="text-sm text-gray-600 my-1">
