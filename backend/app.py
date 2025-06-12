@@ -21,6 +21,58 @@ def get_db():
     conn.row_factory = dict_factory
     return conn
 
+def create_pet(data):
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # First, create address
+        cursor.execute('''
+            INSERT INTO endereco (Estado, Cidade, Bairro, Numero, Complemento, CEP)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            data['address']['state'],
+            data['address']['city'],
+            data['address']['neighborhood'],
+            data['address']['number'],
+            data['address']['complement'],
+            data['address']['zip_code']
+        ))
+        address_id = cursor.lastrowid
+
+        # Then, create user
+        cursor.execute('''
+            INSERT INTO usuario (cod_endereco, Nome_usuario, sobrenome_usuario, telefone, email)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (
+            address_id,
+            data['owner']['first_name'],
+            data['owner']['last_name'],
+            data['owner']['phone'],
+            data['owner']['email']
+        ))
+        user_id = cursor.lastrowid
+
+        # Finally, create pet
+        cursor.execute('''
+            INSERT INTO pets (cod_usuario, Nome_animal, status, data_registro, data_perda, observacoes)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (
+            user_id,
+            data['pet']['name'],
+            data['pet']['status'],
+            datetime.now().strftime('%Y-%m-%d'),
+            data['pet']['lost_date'],
+            data['pet']['observations']
+        ))
+        
+        conn.commit()
+        return True, cursor.lastrowid
+    except Exception as e:
+        conn.rollback()
+        return False, str(e)
+    finally:
+        conn.close()
+
 @app.route('/api/pets', methods=['GET'])
 def get_pets():
     try:
@@ -81,6 +133,21 @@ def get_pet(id):
         return jsonify({'message': 'Pet not found'}), 404
     except Exception as e:
         print(f"Error in get_pet: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pets', methods=['POST'])
+def create_new_pet():
+    try:
+        data = request.get_json()
+        success, result = create_pet(data)
+        
+        if success:
+            return jsonify({'message': 'Pet registered successfully', 'id': result}), 201
+        else:
+            return jsonify({'message': 'Failed to register pet', 'error': result}), 400
+            
+    except Exception as e:
+        print(f"Error in create_new_pet: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':

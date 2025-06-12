@@ -5,6 +5,13 @@ from urllib.parse import urlparse
 import os
 
 class ProxyHandler(SimpleHTTPRequestHandler):
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+        self.end_headers()
+
     def do_GET(self):
         # Parse the request URL
         url = urlparse(self.path)
@@ -39,8 +46,49 @@ class ProxyHandler(SimpleHTTPRequestHandler):
         except Exception as e:
             self.send_error(404, f"File not found")
 
+    def do_POST(self):
+        # Parse the request URL
+        url = urlparse(self.path)
+        
+        # If the path starts with /api, proxy to Flask backend
+        if url.path.startswith('/api/'):
+            backend_url = f'http://localhost:5000{url.path}'
+            try:
+                # Read the request body
+                content_length = int(self.headers['Content-Length'])
+                body = self.rfile.read(content_length)
+                
+                # Create POST request to backend
+                req = urllib.request.Request(
+                    backend_url, 
+                    data=body,
+                    headers={
+                        'Content-Type': 'application/json'
+                    },
+                    method='POST'
+                )
+                
+                # Forward the request to the backend
+                with urllib.request.urlopen(req) as response:
+                    # Copy status code
+                    self.send_response(response.status)
+                    
+                    # Copy headers
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.end_headers()
+                    
+                    # Copy content
+                    self.wfile.write(response.read())
+            except urllib.error.URLError as e:
+                self.send_error(500, f"Backend error: {str(e)}")
+            return
+        
+        self.send_error(404, "Not found")
+
 if __name__ == '__main__':
-    os.chdir('/project/sandbox/user-workspace')  # Set working directory
+    import os
+    os.chdir('c:/Users/axtec/OneDrive/Área de Trabalho/flask')  # Set working directory to current project
     server = HTTPServer(('', 8000), ProxyHandler)
     print('Starting server on port 8000...')
     server.serve_forever()

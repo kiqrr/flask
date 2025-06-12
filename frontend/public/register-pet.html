@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Pet - Cadê meu pet?</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <header class="bg-blue-500 text-white w-full">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <a href="/" class="flex items-center">
+                    <i class="fas fa-paw fa-2x"></i>
+                    <span class="text-lg ml-2">Cadê meu pet?</span>
+                </a>
+                <div>
+                    <a href="#" class="mr-4 hover:text-gray-200">Login</a>
+                    <a href="#" class="bg-white text-blue-500 py-2 px-4 rounded hover:bg-gray-100">Cadastra-se</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-semibold mb-6 text-center">Cadastrar Pet Perdido/Encontrado</h1>
+        
+        <form id="petForm" class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Pet Information -->
+                <div class="col-span-2">
+                    <h2 class="text-xl font-semibold mb-4">Informações do Pet</h2>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="petName">
+                        Nome do Pet *
+                    </label>
+                    <input type="text" id="petName" name="petName" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="status">
+                        Status *
+                    </label>
+                    <select id="status" name="status" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="perdido">Perdido</option>
+                        <option value="encontrado">Encontrado</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="lostDate">
+                        Data que perdeu/encontrou *
+                    </label>
+                    <input type="date" id="lostDate" name="lostDate" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="observations">
+                        Observações *
+                    </label>
+                    <textarea id="observations" name="observations" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        rows="3"></textarea>
+                </div>
+
+                <!-- Owner Information -->
+                <div class="col-span-2">
+                    <h2 class="text-xl font-semibold mb-4 mt-4">Informações do Dono</h2>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="ownerName">
+                        Nome *
+                    </label>
+                    <input type="text" id="ownerName" name="ownerName" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="ownerLastName">
+                        Sobrenome *
+                    </label>
+                    <input type="text" id="ownerLastName" name="ownerLastName" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="phone">
+                        Telefone *
+                    </label>
+                    <input type="tel" id="phone" name="phone" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
+                        Email *
+                    </label>
+                    <input type="email" id="email" name="email" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <!-- Address Information -->
+                <div class="col-span-2">
+                    <h2 class="text-xl font-semibold mb-4 mt-4">Endereço</h2>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="state">
+                        Estado *
+                    </label>
+                    <input type="text" id="state" name="state" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="city">
+                        Cidade *
+                    </label>
+                    <input type="text" id="city" name="city" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="neighborhood">
+                        Bairro *
+                    </label>
+                    <input type="text" id="neighborhood" name="neighborhood" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="number">
+                        Número *
+                    </label>
+                    <input type="number" id="number" name="number" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="complement">
+                        Complemento
+                    </label>
+                    <input type="text" id="complement" name="complement"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="zipCode">
+                        CEP *
+                    </label>
+                    <input type="text" id="zipCode" name="zipCode" required
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+            </div>
+
+            <div class="col-span-2 text-center mt-6">
+                <button type="submit"
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Cadastrar Pet
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <script>
+        document.getElementById('petForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = {
+                pet: {
+                    name: document.getElementById('petName').value,
+                    status: document.getElementById('status').value,
+                    lost_date: document.getElementById('lostDate').value,
+                    observations: document.getElementById('observations').value
+                },
+                owner: {
+                    first_name: document.getElementById('ownerName').value,
+                    last_name: document.getElementById('ownerLastName').value,
+                    phone: document.getElementById('phone').value,
+                    email: document.getElementById('email').value
+                },
+                address: {
+                    state: document.getElementById('state').value,
+                    city: document.getElementById('city').value,
+                    neighborhood: document.getElementById('neighborhood').value,
+                    number: document.getElementById('number').value,
+                    complement: document.getElementById('complement').value,
+                    zip_code: document.getElementById('zipCode').value
+                }
+            };
+
+            try {
+                const response = await fetch('/api/pets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    alert('Pet cadastrado com sucesso!');
+                    window.location.href = '/';
+                } else {
+                    const error = await response.json();
+                    alert(`Erro ao cadastrar: ${error.message}`);
+                }
+            } catch (error) {
+                alert('Erro ao enviar formulário. Por favor, tente novamente.');
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
