@@ -98,6 +98,7 @@ def create_pet(data):
 @app.route('/api/pets', methods=['GET'])
 def get_pets():
     try:
+        status_filter = request.args.get('status', 'perdido')
         conn = get_db()
         cursor = conn.cursor()
         
@@ -115,8 +116,8 @@ def get_pets():
             FROM pets p
             JOIN usuario u ON p.cod_usuario = u.Cod_usuario
             JOIN endereco e ON u.cod_endereco = e.Cod_endereco
-            WHERE p.status = 'perdido'
-        ''')
+            WHERE p.status = ?
+        ''', (status_filter,))
         
         pets = cursor.fetchall()
         conn.close()
