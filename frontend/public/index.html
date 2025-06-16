@@ -32,17 +32,22 @@
                     <option value="encontrado">Encontrado</option>
                     <option value="todos">Todos</option>
                 </select>
-                <select class="px-3 py-2 rounded border">
-                    <option>Gênero</option>
+                <select id="genderFilter" class="px-3 py-2 rounded border">
+                    <option value="">Gênero</option>
+                    <option value="macho">Macho</option>
+                    <option value="femea">Fêmea</option>
                 </select>
-                <select class="px-3 py-2 rounded border">
-                    <option>Espécie</option>
+                <select id="speciesFilter" class="px-3 py-2 rounded border">
+                    <option value="">Espécie</option>
+                    <option value="cachorro">Cachorro</option>
+                    <option value="gato">Gato</option>
+                    <option value="outro">Outro</option>
                 </select>
-                <select class="px-3 py-2 rounded border">
-                    <option>Estado</option>
+                <select id="stateFilter" class="px-3 py-2 rounded border">
+                    <option value="">Estado</option>
                 </select>
-                <select class="px-3 py-2 rounded border">
-                    <option>Cidade</option>
+                <select id="cityFilter" class="px-3 py-2 rounded border" disabled>
+                    <option value="">Cidade</option>
                 </select>
             </div>
         </section>
@@ -110,11 +115,34 @@
             const petsContainer = document.getElementById('pets-container');
             const searchCard = petsContainer.firstElementChild;
             const statusFilter = document.getElementById('statusFilter').value;
+            const genderFilter = document.getElementById('genderFilter').value;
+            const speciesFilter = document.getElementById('speciesFilter').value;
+            const stateFilter = document.getElementById('stateFilter').value;
+            const cityFilter = document.getElementById('cityFilter').value;
+
             let url = `${API_URL}/pets`;
-            if (statusFilter !== 'todos') {
-                url += `?status=${statusFilter}`;
+            let params = new URLSearchParams();
+
+            if (statusFilter && statusFilter.toLowerCase() !== 'todos') {
+                params.append('status', statusFilter);
             }
-            
+            if (genderFilter) {
+                params.append('gender', genderFilter);
+            }
+            if (speciesFilter) {
+                params.append('species', speciesFilter);
+            }
+            if (stateFilter) {
+                params.append('state', stateFilter);
+            }
+            if (cityFilter) {
+                params.append('city', cityFilter);
+            }
+
+            if ([...params].length > 0) {
+                url += `?${params.toString()}`;
+            }
+
             try {
                 console.log('Fetching from:', url);
                 const response = await fetch(url);
@@ -145,9 +173,58 @@
         // Load pets when page loads
         loadPets();
 
-        // Reload pets when status filter changes
-        document.getElementById('statusFilter').addEventListener('change', () => {
+        async function loadStates() {
+            const stateSelect = document.getElementById('stateFilter');
+            try {
+                const response = await fetch(`${API_URL}/states`);
+                if (!response.ok) throw new Error('Failed to fetch states');
+                const states = await response.json();
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state;
+                    option.textContent = state;
+                    stateSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading states:', error);
+            }
+        }
+
+        async function loadCities(state) {
+            const citySelect = document.getElementById('cityFilter');
+            citySelect.innerHTML = '<option value="">Cidade</option>';
+            citySelect.disabled = true;
+            if (!state) return;
+            try {
+                const response = await fetch(`${API_URL}/cities?state=${encodeURIComponent(state)}`);
+                if (!response.ok) throw new Error('Failed to fetch cities');
+                const cities = await response.json();
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    option.textContent = city;
+                    citySelect.appendChild(option);
+                });
+                citySelect.disabled = false;
+            } catch (error) {
+                console.error('Error loading cities:', error);
+            }
+        }
+
+        // Load states on page load
+        loadStates();
+
+        // Load cities when state changes
+        document.getElementById('stateFilter').addEventListener('change', (e) => {
+            loadCities(e.target.value);
             loadPets();
+        });
+
+        // Reload pets when city, gender, species, or status filters change
+        ['cityFilter', 'genderFilter', 'speciesFilter', 'statusFilter'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                loadPets();
+            });
         });
     </script>
 </body>

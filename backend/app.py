@@ -98,11 +98,14 @@ def create_pet(data):
 @app.route('/api/pets', methods=['GET'])
 def get_pets():
     try:
-        status_filter = request.args.get('status', 'perdido')
+        status_filter = request.args.get('status')
+        state_filter = request.args.get('state')
+        city_filter = request.args.get('city')
+
         conn = get_db()
         cursor = conn.cursor()
-        
-        cursor.execute('''
+
+        base_query = '''
             SELECT 
                 p.Cod_animal as id,
                 p.Nome_animal as name,
@@ -116,12 +119,30 @@ def get_pets():
             FROM pets p
             JOIN usuario u ON p.cod_usuario = u.Cod_usuario
             JOIN endereco e ON u.cod_endereco = e.Cod_endereco
-            WHERE p.status = ?
-        ''', (status_filter,))
-        
+        '''
+
+        conditions = []
+        params = []
+
+        if status_filter and status_filter.lower() != 'todos':
+            conditions.append('p.status = ?')
+            params.append(status_filter)
+
+        if state_filter:
+            conditions.append('e.Estado = ?')
+            params.append(state_filter)
+
+        if city_filter:
+            conditions.append('e.Cidade = ?')
+            params.append(city_filter)
+
+        if conditions:
+            base_query += ' WHERE ' + ' AND '.join(conditions)
+
+        cursor.execute(base_query, params)
         pets = cursor.fetchall()
         conn.close()
-        
+
         pets_list = [dict_factory(cursor, row) for row in pets]
         return jsonify(pets_list)
     except Exception as e:
@@ -253,6 +274,33 @@ def serve_photo(filename):
     print(f"Full path: {os.path.join(UPLOAD_FOLDER, filename)}")
     print(f"File exists: {os.path.exists(os.path.join(UPLOAD_FOLDER, filename))}")
     return send_from_directory(UPLOAD_FOLDER, filename)
+
+@app.route('/api/states', methods=['GET'])
+def get_states():
+    try:
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT DISTINCT Estado FROM endereco ORDER BY Estado')
+        states = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return jsonify(states)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/cities', methods=['GET'])
+def get_cities():
+    try:
+        state = request.args.get('state')
+        if not state:
+            return jsonify({'error': 'State parameter is required'}), 400
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT DISTINCT Cidade FROM endereco WHERE Estado = ? ORDER BY Cidade', (state,))
+        cities = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return jsonify(cities)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
