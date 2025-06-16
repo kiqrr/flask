@@ -9,12 +9,15 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-UPLOAD_FOLDER = 'uploads'
+# Use absolute path for uploads folder
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 MAX_PHOTOS = 5
 
+# Ensure uploads directory exists
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
+    print(f"Created uploads directory at: {UPLOAD_FOLDER}")
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -267,7 +270,10 @@ def upload_pet_photos(id):
     finally:
         conn.close()
 
+from flask_cors import cross_origin
+
 @app.route('/api/uploads/<path:filename>')
+@cross_origin()
 def serve_photo(filename):
     print(f"Serving photo: {filename}")
     print(f"Upload folder: {UPLOAD_FOLDER}")

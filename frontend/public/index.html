@@ -76,28 +76,32 @@
             return `${day}/${month}/${year}`;
         }
 
-        function getPetImage(observations) {
-            if (observations && (observations.toLowerCase().includes('cão') || 
-                observations.toLowerCase().includes('cachorro'))) {
-                return '2253275';
+        function getDefaultPetImage(observations) {
+            // Simple placeholder image as data URL
+            const dogPlaceholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNTBDMTI3LjYxNCA1MCA1MCA3Ny4zODU4IDUwIDEwNUM1MCAxMzIuNjE0IDc3LjM4NTggMTYwIDEwNSAxNjBIMTAwQzEyNy42MTQgMTYwIDE1NSAxMzIuNjE0IDE1NSAxMDVDMTU1IDc3LjM4NTggMTI3LjYxNCA1MCAxMDAgNTBaIiBmaWxsPSIjOUNBM0FGIi8+CjxjaXJjbGUgY3g9Ijg1IiBjeT0iOTAiIHI9IjUiIGZpbGw9IiM0QjVTNjMiLz4KPGNpcmNsZSBjeD0iMTE1IiBjeT0iOTAiIHI9IjUiIGZpbGw9IiM0QjVTNjMiLz4KPHBhdGggZD0iTTEwMCAxMTBMMTA1IDEyMEg5NUwxMDAgMTEwWiIgZmlsbD0iIzRCNVM2MyIvPgo8L3N2Zz4K';
+            const catPlaceholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjEwMCIgcj0iNDAiIGZpbGw9IiM5Q0EzQUYiLz4KPHBvbHlnb24gcG9pbnRzPSI3NSw3MCA4NSw1MCA5NSw3MCIgZmlsbD0iIzlDQTNBRiIvPgo8cG9seWdvbiBwb2ludHM9IjEwNSw3MCAxMTUsNTAgMTI1LDcwIiBmaWxsPSIjOUNBM0FGIi8+CjxjaXJjbGUgY3g9Ijg1IiBjeT0iOTAiIHI9IjMiIGZpbGw9IiM0QjVTNjMiLz4KPGNpcmNsZSBjeD0iMTE1IiBjeT0iOTAiIHI9IjMiIGZpbGw9IiM0QjVTNjMiLz4KPGVsbGlwc2UgY3g9IjEwMCIgY3k9IjEwNSIgcng9IjMiIHJ5PSIyIiBmaWxsPSIjNEI1UzYzIi8+Cjwvc3ZnPgo=';
+            
+            if (observations && (observations.toLowerCase().includes('gato') || 
+                observations.toLowerCase().includes('felino'))) {
+                return catPlaceholder;
             }
-            return '45201';
+            return dogPlaceholder;
         }
 
         function createPetCard(pet) {
             const petDiv = document.createElement('div');
             petDiv.className = 'bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow';
             
-            const defaultImageId = getPetImage(pet.observations);
+            const defaultImage = getDefaultPetImage(pet.observations);
             const imageUrl = pet.primary_photo 
                 ? `http://localhost:5000/api/uploads/${pet.primary_photo}`
-                : `https://images.pexels.com/photos/${defaultImageId}/pexels-photo-${defaultImageId}.jpeg`;
+                : defaultImage;
             
             petDiv.innerHTML = `
                 <a href="pet-details.html?id=${pet.id}" class="block">
                     <img src="${imageUrl}" 
                          alt="Pet" class="w-full h-48 object-cover rounded-lg mb-3" 
-                         onerror="this.onerror=null; this.src='https://images.pexels.com/photos/${defaultImageId}/pexels-photo-${defaultImageId}.jpeg';" />
+                         onerror="this.onerror=null; this.src='${defaultImage}';" />
                     <h2 class="text-lg font-semibold">${pet.name}</h2>
                     <p class="text-sm text-gray-600">${pet.status}</p>
                     <p class="text-sm text-gray-600 my-1">
