@@ -327,13 +327,19 @@ def upload_pet_photos(id):
     saved_photos = []
     try:
         # Check if pet exists
-        cursor.execute('SELECT Cod_animal FROM pets WHERE Cod_animal = ?', (id,))
+        if config.DB_TYPE == 'MYSQL':
+            cursor.execute('SELECT Cod_animal FROM pets WHERE Cod_animal = %s', (id,))
+        else:
+            cursor.execute('SELECT Cod_animal FROM pets WHERE Cod_animal = ?', (id,))
         pet = cursor.fetchone()
         if not pet:
             return jsonify({'message': 'Pet not found'}), 404
         
         # Check how many photos already exist
-        cursor.execute('SELECT COUNT(*) FROM pet_photos WHERE pet_id = ?', (id,))
+        if config.DB_TYPE == 'MYSQL':
+            cursor.execute('SELECT COUNT(*) FROM pet_photos WHERE pet_id = %s', (id,))
+        else:
+            cursor.execute('SELECT COUNT(*) FROM pet_photos WHERE pet_id = ?', (id,))
         count = cursor.fetchone()[0]
         if count + len(files) > MAX_PHOTOS:
             return jsonify({'message': f'You can upload only {MAX_PHOTOS - count} more photos'}), 400
@@ -353,10 +359,16 @@ def upload_pet_photos(id):
                 if count == 0 and idx == 0:
                     is_primary = 1
                 
-                cursor.execute('''
-                    INSERT INTO pet_photos (pet_id, photo_path, is_primary)
-                    VALUES (?, ?, ?)
-                ''', (id, filename, is_primary))
+                if config.DB_TYPE == 'MYSQL':
+                    cursor.execute('''
+                        INSERT INTO pet_photos (pet_id, photo_path, is_primary)
+                        VALUES (%s, %s, %s)
+                    ''', (id, filename, is_primary))
+                else:
+                    cursor.execute('''
+                        INSERT INTO pet_photos (pet_id, photo_path, is_primary)
+                        VALUES (?, ?, ?)
+                    ''', (id, filename, is_primary))
                 saved_photos.append(filename)
         
         conn.commit()
