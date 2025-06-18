@@ -5,6 +5,8 @@ import json
 import os
 from datetime import datetime
 from werkzeug.utils import secure_filename
+import config
+import mysql.connector
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -33,62 +35,112 @@ def dict_factory(cursor, row):
     return dict(zip(columns, row))
 
 def get_db():
-    conn_str = (
-        r'DRIVER={ODBC Driver 17 for SQL Server};'
-        r'SERVER=ALUNO33\MSSQLSERVER03;'
-        r'DATABASE=cademeupet;'
-        r'Trusted_Connection=yes;'
-    )
-    conn = pyodbc.connect(conn_str)
-    return conn
+    if config.DB_TYPE == 'MYSQL':
+        conn = mysql.connector.connect(
+            host=config.MYSQL_CONFIG['host'],
+            user=config.MYSQL_CONFIG['user'],
+            password=config.MYSQL_CONFIG['password'],
+            database=config.MYSQL_CONFIG['database']
+        )
+        return conn
+    else:
+        conn_str = (
+            r'DRIVER=' + config.SQLSERVER_CONFIG['driver'] + ';'
+            r'SERVER=' + config.SQLSERVER_CONFIG['server'] + ';'
+            r'DATABASE=' + config.SQLSERVER_CONFIG['database'] + ';'
+            r'Trusted_Connection=' + config.SQLSERVER_CONFIG['trusted_connection'] + ';'
+        )
+        conn = pyodbc.connect(conn_str)
+        return conn
 
 def create_pet(data):
     conn = get_db()
     cursor = conn.cursor()
     try:
         # First, create address
-        cursor.execute('''
-            INSERT INTO endereco (Estado, Cidade, Bairro, Numero, Complemento, CEP)
-            OUTPUT INSERTED.Cod_endereco
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            data['address']['state'],
-            data['address']['city'],
-            data['address']['neighborhood'],
-            data['address']['number'],
-            data['address']['complement'],
-            data['address']['zip_code']
-        ))
-        address_id = cursor.fetchone()[0]
+        if config.DB_TYPE == 'MYSQL':
+            cursor.execute('''
+                INSERT INTO endereco (Estado, Cidade, Bairro, Numero, Complemento, CEP)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            ''', (
+                data['address']['state'],
+                data['address']['city'],
+                data['address']['neighborhood'],
+                data['address']['number'],
+                data['address']['complement'],
+                data['address']['zip_code']
+            ))
+            address_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                INSERT INTO endereco (Estado, Cidade, Bairro, Numero, Complemento, CEP)
+                OUTPUT INSERTED.Cod_endereco
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (
+                data['address']['state'],
+                data['address']['city'],
+                data['address']['neighborhood'],
+                data['address']['number'],
+                data['address']['complement'],
+                data['address']['zip_code']
+            ))
+            address_id = cursor.fetchone()[0]
 
         # Then, create user
-        cursor.execute('''
-            INSERT INTO usuario (cod_endereco, Nome_usuario, sobrenome_usuario, telefone, email)
-            OUTPUT INSERTED.Cod_usuario
-            VALUES (?, ?, ?, ?, ?)
-        ''', (
-            address_id,
-            data['owner']['first_name'],
-            data['owner']['last_name'],
-            data['owner']['phone'],
-            data['owner']['email']
-        ))
-        user_id = cursor.fetchone()[0]
+        if config.DB_TYPE == 'MYSQL':
+            cursor.execute('''
+                INSERT INTO usuario (cod_endereco, Nome_usuario, sobrenome_usuario, telefone, email)
+                VALUES (%s, %s, %s, %s, %s)
+            ''', (
+                address_id,
+                data['owner']['first_name'],
+                data['owner']['last_name'],
+                data['owner']['phone'],
+                data['owner']['email']
+            ))
+            user_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                INSERT INTO usuario (cod_endereco, Nome_usuario, sobrenome_usuario, telefone, email)
+                OUTPUT INSERTED.Cod_usuario
+                VALUES (?, ?, ?, ?, ?)
+            ''', (
+                address_id,
+                data['owner']['first_name'],
+                data['owner']['last_name'],
+                data['owner']['phone'],
+                data['owner']['email']
+            ))
+            user_id = cursor.fetchone()[0]
 
         # Finally, create pet
-        cursor.execute('''
-            INSERT INTO pets (cod_usuario, Nome_animal, status, data_registro, data_perda, observacoes)
-            OUTPUT INSERTED.Cod_animal
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            user_id,
-            data['pet']['name'],
-            data['pet']['status'],
-            datetime.now().strftime('%Y-%m-%d'),
-            data['pet']['lost_date'],
-            data['pet']['observations']
-        ))
-        pet_id = cursor.fetchone()[0]
+        if config.DB_TYPE == 'MYSQL':
+            cursor.execute('''
+                INSERT INTO pets (cod_usuario, Nome_animal, status, data_registro, data_perda, observacoes)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            ''', (
+                user_id,
+                data['pet']['name'],
+                data['pet']['status'],
+                datetime.now().strftime('%Y-%m-%d'),
+                data['pet']['lost_date'],
+                data['pet']['observations']
+            ))
+            pet_id = cursor.lastrowid
+        else:
+            cursor.execute('''
+                INSERT INTO pets (cod_usuario, Nome_animal, status, data_registro, data_perda, observacoes)
+                OUTPUT INSERTED.Cod_animal
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (
+                user_id,
+                data['pet']['name'],
+                data['pet']['status'],
+                datetime.now().strftime('%Y-%m-%d'),
+                data['pet']['lost_date'],
+                data['pet']['observations']
+            ))
+            pet_id = cursor.fetchone()[0]
         
         conn.commit()
         return True, pet_id
@@ -108,35 +160,61 @@ def get_pets():
         conn = get_db()
         cursor = conn.cursor()
 
-        base_query = '''
-            SELECT 
-                p.Cod_animal as id,
-                p.Nome_animal as name,
-                p.status,
-                p.data_perda as lost_date,
-                p.observacoes as observations,
-                u.Nome_usuario + ' ' + u.sobrenome_usuario as owner_name,
-                u.telefone as owner_phone,
-                e.Bairro + ', ' + e.Cidade + ' - ' + e.Estado as lost_location,
-                (SELECT TOP 1 photo_path FROM pet_photos WHERE pet_id = p.Cod_animal AND is_primary = 1) as primary_photo
-            FROM pets p
-            JOIN usuario u ON p.cod_usuario = u.Cod_usuario
-            JOIN endereco e ON u.cod_endereco = e.Cod_endereco
-        '''
+        if config.DB_TYPE == 'MYSQL':
+            base_query = '''
+                SELECT 
+                    p.Cod_animal as id,
+                    p.Nome_animal as name,
+                    p.status,
+                    p.data_perda as lost_date,
+                    p.observacoes as observations,
+                    CONCAT(u.Nome_usuario, ' ', u.sobrenome_usuario) as owner_name,
+                    u.telefone as owner_phone,
+                    CONCAT(e.Bairro, ', ', e.Cidade, ' - ', e.Estado) as lost_location,
+                    (SELECT photo_path FROM pet_photos WHERE pet_id = p.Cod_animal AND is_primary = 1 LIMIT 1) as primary_photo
+                FROM pets p
+                JOIN usuario u ON p.cod_usuario = u.Cod_usuario
+                JOIN endereco e ON u.cod_endereco = e.Cod_endereco
+            '''
+        else:
+            base_query = '''
+                SELECT 
+                    p.Cod_animal as id,
+                    p.Nome_animal as name,
+                    p.status,
+                    p.data_perda as lost_date,
+                    p.observacoes as observations,
+                    u.Nome_usuario + ' ' + u.sobrenome_usuario as owner_name,
+                    u.telefone as owner_phone,
+                    e.Bairro + ', ' + e.Cidade + ' - ' + e.Estado as lost_location,
+                    (SELECT TOP 1 photo_path FROM pet_photos WHERE pet_id = p.Cod_animal AND is_primary = 1) as primary_photo
+                FROM pets p
+                JOIN usuario u ON p.cod_usuario = u.Cod_usuario
+                JOIN endereco e ON u.cod_endereco = e.Cod_endereco
+            '''
 
         conditions = []
         params = []
 
         if status_filter and status_filter.lower() != 'todos':
-            conditions.append('p.status = ?')
+            if config.DB_TYPE == 'MYSQL':
+                conditions.append('p.status = %s')
+            else:
+                conditions.append('p.status = ?')
             params.append(status_filter)
 
         if state_filter:
-            conditions.append('e.Estado = ?')
+            if config.DB_TYPE == 'MYSQL':
+                conditions.append('e.Estado = %s')
+            else:
+                conditions.append('e.Estado = ?')
             params.append(state_filter)
 
         if city_filter:
-            conditions.append('e.Cidade = ?')
+            if config.DB_TYPE == 'MYSQL':
+                conditions.append('e.Cidade = %s')
+            else:
+                conditions.append('e.Cidade = ?')
             params.append(city_filter)
 
         if conditions:
@@ -167,21 +245,38 @@ def get_pet(id):
         conn = get_db()
         cursor = conn.cursor()
         
-        cursor.execute('''
-            SELECT 
-                p.Cod_animal as id,
-                p.Nome_animal as name,
-                p.status,
-                p.data_perda as lost_date,
-                p.observacoes as observations,
-                u.Nome_usuario + ' ' + u.sobrenome_usuario as owner_name,
-                u.telefone as owner_phone,
-                e.Bairro + ', ' + e.Cidade + ' - ' + e.Estado as lost_location
-            FROM pets p
-            JOIN usuario u ON p.cod_usuario = u.Cod_usuario
-            JOIN endereco e ON u.cod_endereco = e.Cod_endereco
-            WHERE p.Cod_animal = ?
-        ''', (id,))
+        if config.DB_TYPE == 'MYSQL':
+            cursor.execute('''
+                SELECT 
+                    p.Cod_animal as id,
+                    p.Nome_animal as name,
+                    p.status,
+                    p.data_perda as lost_date,
+                    p.observacoes as observations,
+                    CONCAT(u.Nome_usuario, ' ', u.sobrenome_usuario) as owner_name,
+                    u.telefone as owner_phone,
+                    CONCAT(e.Bairro, ', ', e.Cidade, ' - ', e.Estado) as lost_location
+                FROM pets p
+                JOIN usuario u ON p.cod_usuario = u.Cod_usuario
+                JOIN endereco e ON u.cod_endereco = e.Cod_endereco
+                WHERE p.Cod_animal = %s
+            ''', (id,))
+        else:
+            cursor.execute('''
+                SELECT 
+                    p.Cod_animal as id,
+                    p.Nome_animal as name,
+                    p.status,
+                    p.data_perda as lost_date,
+                    p.observacoes as observations,
+                    u.Nome_usuario + ' ' + u.sobrenome_usuario as owner_name,
+                    u.telefone as owner_phone,
+                    e.Bairro + ', ' + e.Cidade + ' - ' + e.Estado as lost_location
+                FROM pets p
+                JOIN usuario u ON p.cod_usuario = u.Cod_usuario
+                JOIN endereco e ON u.cod_endereco = e.Cod_endereco
+                WHERE p.Cod_animal = ?
+            ''', (id,))
         
         pet = cursor.fetchone()
         if not pet:
@@ -191,12 +286,20 @@ def get_pet(id):
         pet_dict = dict_factory(cursor, pet)
         
         # Get all photos for the pet
-        cursor.execute('''
-            SELECT photo_id, photo_path, is_primary
-            FROM pet_photos
-            WHERE pet_id = ?
-            ORDER BY is_primary DESC, photo_id ASC
-        ''', (id,))
+        if config.DB_TYPE == 'MYSQL':
+            cursor.execute('''
+                SELECT photo_id, photo_path, is_primary
+                FROM pet_photos
+                WHERE pet_id = %s
+                ORDER BY is_primary DESC, photo_id ASC
+            ''', (id,))
+        else:
+            cursor.execute('''
+                SELECT photo_id, photo_path, is_primary
+                FROM pet_photos
+                WHERE pet_id = ?
+                ORDER BY is_primary DESC, photo_id ASC
+            ''', (id,))
         photos = cursor.fetchall()
         conn.close()
         
